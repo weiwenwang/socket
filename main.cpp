@@ -10,6 +10,8 @@
 
 using namespace std;
 
+void do_service(int clnt_sock);
+
 int main() {
     //创建套接字
     int serv_sock = socket(AF_INET, SOCK_STREAM, IPPROTO_TCP);
@@ -25,22 +27,31 @@ int main() {
     //接收客户端请求
     struct sockaddr_in clnt_addr;
     socklen_t clnt_addr_size = sizeof(clnt_addr);
-    int BUF_SIZE = 1024;
 
-    char buf[BUF_SIZE];
-    int read_len;
-
+    pid_t pid;
     while (1) {
-        memset(buf, 0, sizeof(buf));
         cout << "我在等你连接" << endl;
         int clnt_sock = accept(serv_sock, (struct sockaddr *) &clnt_addr, &clnt_addr_size);
-
-        read_len = read(clnt_sock, buf, BUF_SIZE);
-
-        write(clnt_sock, buf, sizeof(buf));
-        cout << "关闭" << endl;
-        //关闭套接字
-        close(clnt_sock);
+        pid = fork();
+        if (pid == 0) {
+            // 关闭监听套接字
+            close(serv_sock);
+            sleep(10);
+            do_service(clnt_sock);
+            exit(-6);
+        } else {
+            // 关闭连接套接字
+            close(clnt_sock);
+        }
     }
     return 0;
+}
+
+void do_service(int clnt_sock) {
+    char buf[1024] = {0};
+    int read_len = read(clnt_sock, buf, sizeof(buf));
+    write(clnt_sock, buf, read_len);
+    cout << "关闭" << endl;
+    //关闭连接套接字
+    close(clnt_sock);
 }
