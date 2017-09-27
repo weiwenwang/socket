@@ -1,8 +1,5 @@
 #include<iostream>
 
-#include "person.h"
-#include "Dog.h"
-
 #include <stdio.h>
 #include <string.h>
 #include <stdlib.h>
@@ -11,13 +8,9 @@
 #include <sys/socket.h>
 #include <netinet/in.h>
 
-
 using namespace std;
 
-
 int main() {
-    Dog dog;
-
     //创建套接字
     int serv_sock = socket(AF_INET, SOCK_STREAM, IPPROTO_TCP);
     //将套接字和IP、端口绑定
@@ -36,24 +29,11 @@ int main() {
     while (1) {
         cout << "我在等你连接" << endl;
         int clnt_sock = accept(serv_sock, (struct sockaddr *) &clnt_addr, &clnt_addr_size);
-
-
         char str[] = "Hello World!";
         write(clnt_sock, str, sizeof(str));
-
-
         cout << "关闭" << endl;
         //关闭套接字
         close(clnt_sock);
-
-
     }
-
-
-    int sub = dog.sub(20, 10);
-
-    printf("%d\n", sub);
-    // cout<< "hello world" <<endl;
-
     return 0;
 }

@@ -1,7 +1,7 @@
 CC=g++
 exe=main
 
-obj=main.o person.o Dog.o
+obj=main.o
 
 $(exe):$(obj)
 	$(CC) -Wall -o $(exe) $(obj)
