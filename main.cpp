@@ -25,12 +25,19 @@ int main() {
     //接收客户端请求
     struct sockaddr_in clnt_addr;
     socklen_t clnt_addr_size = sizeof(clnt_addr);
+    int BUF_SIZE = 1024;
+
+    char buf[BUF_SIZE];
+    int read_len;
 
     while (1) {
+        memset(buf, 0, sizeof(buf));
         cout << "我在等你连接" << endl;
         int clnt_sock = accept(serv_sock, (struct sockaddr *) &clnt_addr, &clnt_addr_size);
-        char str[] = "Hello World!";
-        write(clnt_sock, str, sizeof(str));
+
+        read_len = read(clnt_sock, buf, BUF_SIZE);
+
+        write(clnt_sock, buf, sizeof(buf));
         cout << "关闭" << endl;
         //关闭套接字
         close(clnt_sock);
