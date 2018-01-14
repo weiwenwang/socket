@@ -13,7 +13,7 @@
     } while(0)
 
 int main() {
-    printf("Hello World from t1 Main! \n");
+    printf("welcome to thomas's socket \n");
     //创建套接字
     int sock = socket(AF_INET, SOCK_STREAM, 0);
     //向服务器（特定的IP和端口）发起请求
