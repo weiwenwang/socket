@@ -2,6 +2,7 @@
 #include <string.h>
 #include <stdlib.h>
 #include <unistd.h>
+#include <signal.h>
 #include <arpa/inet.h>
 #include <sys/socket.h>
 #include <netinet/in.h>
@@ -39,7 +40,7 @@ void handle_sigchld(int signo) {
 }
 
 int main() {
-    printf("Hello World from t1 Main! \n");
+    printf("welcome to thomas's socket \n");
 
     //创建套接字
     int listen_sock;
