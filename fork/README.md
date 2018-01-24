@@ -27,8 +27,8 @@
     
 #### 2.地址重复利用
 
-    当服务端先关闭的时候，服务端会出现FIN_WAIT2然后是TIME_WAIT状态，这个时候，服务端再次bind这个端口就会出现EADDRINUSE错误，
-    解决办法是setsockopt设置套接字地址重复利用:
+    当服务端先关闭的时候，服务端会出现FIN_WAIT2然后是TIME_WAIT状态，这个时候，服务端再次bind这个端口就会出现EADDRINUSE
+    错误，解决办法是setsockopt设置套接字地址重复利用:
 
 ```apple js
 int on = 1;
