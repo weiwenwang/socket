@@ -31,6 +31,13 @@ void do_service(int connect_sock) {
     }
 }
 
+void handle_sigchld(int signo) {
+    int status;
+    while (waitpid(-1, &status, WNOHANG) > 0) {
+        printf("子进程退出,exit(%d)", signo);
+    }
+}
+
 int main() {
     printf("Hello World from t1 Main! \n");
 
@@ -66,6 +73,7 @@ int main() {
     socklen_t clnt_addr_size = sizeof(clnt_addr);
     int connect_sock;
 
+    signal(SIGCHLD, handle_sigchld);
     pid_t pid;
     while (1) { // 监听套接字循环接受连接
         if ((connect_sock = accept(listen_sock, (struct sockaddr *) &clnt_addr, &clnt_addr_size)) < 0) {
