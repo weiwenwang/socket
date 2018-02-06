@@ -6,3 +6,5 @@ Makefile
 cmake_install.cmake
 Fork.cbp
 cmake-build-debug
+build/
+.idea/

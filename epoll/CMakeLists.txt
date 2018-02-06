@@ -1,11 +1,10 @@
-# CMake 最低版本号要求
-cmake_minimum_required(VERSION 2.8)
-# 项目信息
-project(Epoll)
-# 查找当前目录下的所有源文件
-# 并将名称保存到 DIR_SRCS 变量
-aux_source_directory(. DIR_SRCS)
-# 指定生成目标
-add_executable(server server.c)
-add_executable(client client.c)
-# 指定安装路径
+cmake_minimum_required(VERSION 3.7)
+project(epoll)
+
+set(CMAKE_C_STANDARD 99)
+
+set(SERVER server.c)
+set(CLIENT client.c)
+
+add_executable(server ${SERVER})
+add_executable(client ${CLIENT})

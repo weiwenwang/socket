@@ -1,35 +1,21 @@
-#include <stdio.h>
-#include <string.h>
-#include <stdlib.h>
-#include <unistd.h>
-#include <signal.h>
-#include <arpa/inet.h>
-#include <sys/socket.h>
-#include <netinet/in.h>
+#include "common.h"
 
-
-#define ERR_EXIT(m) \
-    do \
-    { \
-        perror(m); \
-        exit(EXIT_FAILURE); \
-    } while(0)
+#define MAXEVENTS 64
 
 void do_service(int connect_sock) {
     char buffer[1024];
-    while (1) {
-        memset(buffer, 0, sizeof(buffer));
-        int ret = read(connect_sock, buffer, sizeof(buffer));
-        if (ret == 0) { // 客户端关闭
-            printf("client close\n");
-            break;
-        }
-        if (ret == -1) {
-            ERR_EXIT("read");
-        }
-        fputs(buffer, stdout);
-        write(connect_sock, buffer, ret);
+
+    memset(buffer, 0, sizeof(buffer));
+    int ret = read(connect_sock, buffer, sizeof(buffer));
+    if (ret == 0) { // 客户端关闭
+        printf("client close\n");
     }
+    if (ret == -1) {
+        ERR_EXIT("read");
+    }
+    fputs(buffer, stdout);
+    write(connect_sock, buffer, ret);
+ 
 }
 
 void handle_sigchld(int signo) {
@@ -76,29 +62,42 @@ int main() {
 
     signal(SIGCHLD, handle_sigchld);
     pid_t pid;
-    while (1) { // 监听套接字循环接受连接
-        if ((connect_sock = accept(listen_sock, (struct sockaddr *) &clnt_addr, &clnt_addr_size)) < 0) {
-            ERR_EXIT("accept");
-        } else {
-            printf("ip = %s, port = %d \n", inet_ntoa(clnt_addr.sin_addr), ntohs(clnt_addr.sin_port));
-            fflush(stdout);
-        }
 
-        pid = fork();
-        if (pid == -1) {
-            ERR_EXIT("fork");
-        }
-        if (pid == 0) { // 子进程 向客户端发送数据
-            close(listen_sock); // 关闭监听套接字
-            do_service(connect_sock);
-            exit(EXIT_SUCCESS);
-        } else {
-            close(connect_sock); // 父进程 关闭连接套接字
+    int epollfd = epoll_create1(0);
+    struct epoll_event event;
+    struct epoll_event *events;
+    event.data.fd = listen_sock;
+    event.events = EPOLLIN | EPOLLET; // 注册监听套接字的可读事件
+    epoll_ctl(epollfd, EPOLL_CTL_ADD, listen_sock, &event);
+
+    events = calloc(MAXEVENTS, sizeof event);
+
+    while (1) {
+        int n, i;
+        n = epoll_wait(epollfd, events, MAXEVENTS, -1);
+        for (i = 0; i < n; i++) {
+            if (
+                    (events[i].events & EPOLLERR) ||
+                    (events[i].events & EPOLLHUP) ||
+                    (!(events[i].events & EPOLLIN))
+                    ) {
+                ERR_EXIT("WANG");
+
+            } else if (listen_sock == events[i].data.fd) { //监听套接字，有事件到来
+                int infd;
+                if ((infd = accept(listen_sock, (struct sockaddr *) &clnt_addr, &clnt_addr_size)) < 0) {
+                    ERR_EXIT("accept");
+                } else {
+                    printf("ip = %s, port = %d \n", inet_ntoa(clnt_addr.sin_addr), ntohs(clnt_addr.sin_port));
+                    fflush(stdout);
+                }
+                event.data.fd = infd;
+                event.events = EPOLLIN | EPOLLET;
+                epoll_ctl(epollfd, EPOLL_CTL_ADD, infd, &event);
+
+            } else { //已连接套接字，有事件到来
+                do_service(events[i].data.fd);
+            }
         }
     }
-
-    //关闭套接字
-    close(connect_sock);
-    close(listen_sock);
-    return 0;
 }
