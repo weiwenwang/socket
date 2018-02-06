@@ -2,20 +2,20 @@
 
 #define MAXEVENTS 64
 
-void do_service(int connect_sock) {
+void do_service(struct epoll_event connect_sock, int eventfd) {
     char buffer[1024];
-
+    int fd = connect_sock.data.fd;
     memset(buffer, 0, sizeof(buffer));
-    int ret = read(connect_sock, buffer, sizeof(buffer));
+    int ret = read(fd, buffer, sizeof(buffer));
     if (ret == 0) { // 客户端关闭
+        epoll_ctl(eventfd, EPOLL_CTL_DEL, fd, &connect_sock);
         printf("client close\n");
     }
     if (ret == -1) {
         ERR_EXIT("read");
     }
     fputs(buffer, stdout);
-    write(connect_sock, buffer, ret);
- 
+    write(fd, buffer, ret);
 }
 
 void handle_sigchld(int signo) {
@@ -58,10 +58,7 @@ int main() {
     //接收客户端请求
     struct sockaddr_in clnt_addr;
     socklen_t clnt_addr_size = sizeof(clnt_addr);
-    int connect_sock;
-
     signal(SIGCHLD, handle_sigchld);
-    pid_t pid;
 
     int epollfd = epoll_create1(0);
     struct epoll_event event;
@@ -96,7 +93,7 @@ int main() {
                 epoll_ctl(epollfd, EPOLL_CTL_ADD, infd, &event);
 
             } else { //已连接套接字，有事件到来
-                do_service(events[i].data.fd);
+                do_service(events[i], epollfd);
             }
         }
     }
